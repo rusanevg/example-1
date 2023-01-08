@@ -1,0 +1,7 @@
+[flake8]
+# F401  Some modules have to be imported without usage
+# E402  Some modules have to be imported not at top of file
+ignore = F401, E402, E241
+exclude = .git,
+max-complexity = 10
+max_line_length = 120

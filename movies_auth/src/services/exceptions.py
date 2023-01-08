@@ -1,0 +1,2 @@
+class OauthProviderError(Exception):
+    pass

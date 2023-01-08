@@ -1,0 +1,43 @@
+version: '3'
+services:
+
+  movies_auth:
+    container_name: movies_auth
+    build:
+      context: ./movies_auth
+      args:
+        YOUR_ENV: production
+    expose:
+      - "5000"
+    env_file:
+      - .env
+    entrypoint: >
+      sh -c "/code/entrypoint.sh"
+    depends_on:
+      - redis
+      - postgres-auth
+
+  redis:
+    image: redis:6.2-alpine
+    container_name: redis
+    command: redis-server --save 20 1 --loglevel warning
+    volumes:
+      - cache:/data
+
+  postgres-auth:
+    container_name: postgres-auth
+    image: postgres:13.3
+    environment:
+      POSTGRES_DB: ${DB_AUTH_NAME}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      PGDATA: "/var/lib/postgresql/data/pgdata"
+    volumes:
+      - pg-data:/var/lib/postgresql/data
+
+
+volumes:
+  cache:
+    driver: local
+  pg-data:
+    driver: local

@@ -1,0 +1,855 @@
+openapi: '3.0.0'
+
+info:
+  title: Auth OpenAPI
+  description: OpenAPI schema for authenticate service of online movies
+  license:
+    name: Apache 2.0
+    url: https://www.apache.org/licenses/LICENSE-2.0.html
+  version: 0.0.1
+
+servers:
+  - url: http://{host}:{port}/api/{version}/auth
+    description: Auth server
+    variables:
+      host:
+        default: localhost
+      port:
+        enum:
+          - '5000'
+          - '80'
+        default: '5000'
+      version:
+        default: v1
+
+paths:
+  /auth_history:
+    get:
+      description: Returns auth history
+      responses:
+        '200':
+          description: list of AuthHistory items
+          content:
+            'application/json':
+              schema:
+                type: object
+                required:
+                  - results
+                  - total
+                  - page
+                  - page_size
+                properties:
+                  results:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/AuthHistory'
+                  total:
+                    type: integer
+                    format: int32
+                    minimum: 0
+                  page:
+                    type: integer
+                    format: int32
+                    minimum: 1
+                  page_size:
+                    type: integer
+                    format: int32
+                    minimum: 1
+        '401':
+          description: Unauthorized
+        default:
+          description: error payload
+          content:
+            'application/json':
+              schema:
+                $ref: '#/components/schemas/Error'
+    parameters:
+      - name: Authorization
+        in: header
+        description: JWT token
+        required: true
+        schema:
+          type: string
+      - name: page
+        in: query
+        description: Page number
+        required: true
+        schema:
+          type: integer
+          format: int32
+          minimum: 1
+      - name: page_size
+        in: query
+        description: Count of items on the page
+        required: true
+        schema:
+          type: integer
+          format: int32
+          minimum: 1
+  /check_permission:
+    post:
+      description: Returns result of permission check
+      requestBody:
+        description: permission check request body
+        required: true
+        content:
+          'application/json':
+            schema:
+              type: object
+              required:
+                - user_id
+                - permission_name
+              properties:
+                user_id:
+                  type: string
+                permission_name:
+                  type: string
+      responses:
+        '200':
+          description: result of permission check
+          content:
+            'application/json':
+              schema:
+                type: object
+                required:
+                  - result
+                properties:
+                  result:
+                    type: boolean
+        '401':
+          description: Unauthorized
+        default:
+          description: error payload
+          content:
+            'application/json':
+              schema:
+                $ref: '#/components/schemas/Error'
+    parameters:
+      - name: Authorization
+        in: header
+        description: JWT token
+        required: true
+        schema:
+          type: string
+  /login:
+    post:
+      description: Returns access_token and refresh_token after successful login of user
+      requestBody:
+        description: login request body
+        required: true
+        content:
+          'application/json':
+            schema:
+              type: object
+              required:
+                - username
+                - password
+              properties:
+                username:
+                  type: string
+                password:
+                  type: string
+                  format: password
+      responses:
+        '200':
+          description: successful user login
+          content:
+            'application/json':
+              schema:
+                type: object
+                required:
+                  - access_token
+                  - refresh_token
+                properties:
+                  access_token:
+                    type: string
+                  refresh_token:
+                    type: string
+        default:
+          description: error payload
+          content:
+            'application/json':
+              schema:
+                $ref: '#/components/schemas/Error'
+  /logout:
+    get:
+      description: Logout user
+      responses:
+        '204':
+          description: successful user logout
+          content:
+            'text/html':
+              schema:
+                type: string
+        '401':
+          description: Unauthorized
+        default:
+          description: error payload
+          content:
+            'application/json':
+              schema:
+                $ref: '#/components/schemas/Error'
+    parameters:
+      - name: Authorization
+        in: header
+        description: JWT token
+        required: true
+        schema:
+          type: string
+  /login_google:
+    get:
+      description: Login via Google
+      responses:
+        '302':
+          description: Redirect to provider
+  /login_google/callback:
+    get:
+      description: Callback for login via Google
+      responses:
+        '200':
+          description: successful user login
+          content:
+            'application/json':
+              schema:
+                type: object
+                required:
+                  - access_token
+                  - refresh_token
+                properties:
+                  access_token:
+                    type: string
+                  refresh_token:
+                    type: string
+        default:
+          description: error payload
+          content:
+            'application/json':
+              schema:
+                $ref: '#/components/schemas/Error'
+      parameters:
+        - name: code
+          in: query
+          description: code
+          required: true
+          schema:
+            type: string
+        - name: scope
+          in: query
+          description: scope list
+          required: true
+          schema:
+            type: string
+        - name: authuser
+          in: query
+          description: auth user state
+          required: true
+          schema:
+            type: integer
+            format: int32
+        - name: prompt
+          in: query
+          description: prompt value (consent etc.)
+          required: true
+          schema:
+            type: string
+  /login_yandex:
+    get:
+      description: Login via Yandex
+      responses:
+        '302':
+          description: Redirect to provider
+  /login_yandex/callback:
+    get:
+      description: Callback for login via Yandex
+      responses:
+        '200':
+          description: successful user login
+          content:
+            'application/json':
+              schema:
+                type: object
+                required:
+                  - access_token
+                  - refresh_token
+                properties:
+                  access_token:
+                    type: string
+                  refresh_token:
+                    type: string
+        default:
+          description: error payload
+          content:
+            'application/json':
+              schema:
+                $ref: '#/components/schemas/Error'
+      parameters:
+        - name: code
+          in: query
+          description: code
+          required: true
+          schema:
+            type: string
+  /permission:
+    post:
+      description: Returns created permission
+      requestBody:
+        description: permission request body
+        required: true
+        content:
+          'application/json':
+            schema:
+              type: object
+              required:
+                - name
+              properties:
+                name:
+                  type: string
+      responses:
+        '200':
+          description: created permission
+          content:
+            'application/json':
+              schema:
+                $ref: '#/components/schemas/Permission'
+        '401':
+          description: Unauthorized
+        default:
+          description: error payload
+          content:
+            'application/json':
+              schema:
+                $ref: '#/components/schemas/Error'
+    parameters:
+      - name: Authorization
+        in: header
+        description: JWT token
+        required: true
+        schema:
+          type: string
+  /permission/{permission_id}:
+    put:
+      description: Returns changed permission
+      requestBody:
+        description: permission request body
+        required: true
+        content:
+          'application/json':
+            schema:
+              type: object
+              required:
+                - name
+              properties:
+                name:
+                  type: string
+      responses:
+        '200':
+          description: changed permission
+          content:
+            'application/json':
+              schema:
+                type: object
+                required:
+                  - item
+                  - message
+                  - properties
+                properties:
+                  item:
+                    $ref: '#/components/schemas/Permission'
+                  message:
+                    type: string
+                  properties:
+                    type: object
+        '401':
+          description: Unauthorized
+        default:
+          description: error payload
+          content:
+            'application/json':
+              schema:
+                $ref: '#/components/schemas/Error'
+    parameters:
+      - name: Authorization
+        in: header
+        description: JWT token
+        required: true
+        schema:
+          type: string
+      - name: permission_id
+        in: path
+        description: permission uuid
+        required: true
+        schema:
+          type: string
+  /refresh_token:
+    post:
+      description: Returns new access_token and new refresh_token
+      requestBody:
+        description: refresh token request body
+        required: true
+        content:
+          'application/json':
+            schema:
+              type: object
+              required:
+                - refresh_token
+              properties:
+                refresh_token:
+                  type: string
+      responses:
+        '200':
+          description: new access_token and new refresh_token
+          content:
+            'application/json':
+              schema:
+                type: object
+                required:
+                  - access_token
+                  - refresh_token
+                properties:
+                  access_token:
+                    type: string
+                  refresh_token:
+                    type: string
+        '401':
+          description: Unauthorized
+        default:
+          description: error payload
+          content:
+            'application/json':
+              schema:
+                $ref: '#/components/schemas/Error'
+    parameters:
+      - name: Authorization
+        in: header
+        description: JWT token
+        required: true
+        schema:
+          type: string
+  /role:
+    post:
+      description: Returns created role
+      requestBody:
+        description: role request body
+        required: true
+        content:
+          'application/json':
+            schema:
+              type: object
+              required:
+                - name
+              properties:
+                name:
+                  type: string
+      responses:
+        '200':
+          description: created role
+          content:
+            'application/json':
+              schema:
+                $ref: '#/components/schemas/Role'
+        '401':
+          description: Unauthorized
+        default:
+          description: error payload
+          content:
+            'application/json':
+              schema:
+                $ref: '#/components/schemas/Error'
+    parameters:
+      - name: Authorization
+        in: header
+        description: JWT token
+        required: true
+        schema:
+          type: string
+  /role/{role_id}:
+    put:
+      description: Returns changed role
+      requestBody:
+        description: role request body
+        required: true
+        content:
+          'application/json':
+            schema:
+              type: object
+              required:
+                - name
+              properties:
+                name:
+                  type: string
+      responses:
+        '200':
+          description: changed role
+          content:
+            'application/json':
+              schema:
+                type: object
+                required:
+                  - item
+                  - message
+                  - properties
+                properties:
+                  item:
+                    $ref: '#/components/schemas/Role'
+                  message:
+                    type: string
+                  properties:
+                    type: object
+        '401':
+          description: Unauthorized
+        default:
+          description: error payload
+          content:
+            'application/json':
+              schema:
+                $ref: '#/components/schemas/Error'
+    parameters:
+      - name: Authorization
+        in: header
+        description: JWT token
+        required: true
+        schema:
+          type: string
+      - name: role_id
+        in: path
+        description: role uuid
+        required: true
+        schema:
+          type: string
+  /role_permission_add:
+    post:
+      description: Assigns permission to role
+      requestBody:
+        description: role permission request body
+        required: true
+        content:
+          'application/json':
+            schema:
+              type: object
+              required:
+                - role_id
+                - permission_id
+              properties:
+                role_id:
+                  type: string
+                permission_id:
+                  type: string
+      responses:
+        '200':
+          description: permission assigned to role
+          content:
+            'application/json':
+              schema:
+                $ref: '#/components/schemas/RolePermission'
+        '401':
+          description: Unauthorized
+        default:
+          description: error payload
+          content:
+            'application/json':
+              schema:
+                $ref: '#/components/schemas/Error'
+    parameters:
+      - name: Authorization
+        in: header
+        description: JWT token
+        required: true
+        schema:
+          type: string
+  /role_permission_revoke:
+    post:
+      description: Revokes permission from role
+      requestBody:
+        description: role permission request body
+        required: true
+        content:
+          'application/json':
+            schema:
+              type: object
+              required:
+                - role_id
+                - permission_id
+              properties:
+                role_id:
+                  type: string
+                permission_id:
+                  type: string
+      responses:
+        '200':
+          description: permission revoked from role
+          content:
+            'application/json':
+              schema:
+                $ref: '#/components/schemas/RolePermission'
+        '401':
+          description: Unauthorized
+        default:
+          description: error payload
+          content:
+            'application/json':
+              schema:
+                $ref: '#/components/schemas/Error'
+    parameters:
+      - name: Authorization
+        in: header
+        description: JWT token
+        required: true
+        schema:
+          type: string
+  /user:
+    post:
+      description: Returns created user
+      requestBody:
+        description: user request body
+        required: true
+        content:
+          'application/json':
+            schema:
+              type: object
+              required:
+                - username
+                - password
+              properties:
+                username:
+                  type: string
+                password:
+                  type: string
+                  format: password
+                email:
+                  type: string
+      responses:
+        '200':
+          description: created user
+          content:
+            'application/json':
+              schema:
+                $ref: '#/components/schemas/User'
+        '400':
+          description: Bad request
+        default:
+          description: error payload
+          content:
+            'application/json':
+              schema:
+                $ref: '#/components/schemas/Error'
+    put:
+      description: Returns changed user
+      requestBody:
+        description: user request body
+        required: true
+        content:
+          'application/json':
+            schema:
+              type: object
+              required:
+                - username
+                - password
+              properties:
+                username:
+                  type: string
+                password:
+                  type: string
+                  format: password
+                email:
+                  type: string
+      responses:
+        '200':
+          description: changed user
+          content:
+            'application/json':
+              schema:
+                type: object
+                required:
+                  - item
+                  - message
+                  - properties
+                properties:
+                  item:
+                    $ref: '#/components/schemas/User'
+                  message:
+                    type: string
+                  properties:
+                    type: object
+        '400':
+          description: Bad request
+        '401':
+          description: Unauthorized
+        default:
+          description: error payload
+          content:
+            'application/json':
+              schema:
+                $ref: '#/components/schemas/Error'
+      parameters:
+        - name: Authorization
+          in: header
+          description: JWT token
+          required: true
+          schema:
+            type: string
+  /user_role_add:
+    post:
+      description: Assigns role to user
+      requestBody:
+        description: user role request body
+        required: true
+        content:
+          'application/json':
+            schema:
+              type: object
+              required:
+                - user_id
+                - role_id
+              properties:
+                user_id:
+                  type: string
+                role_id:
+                  type: string
+      responses:
+        '200':
+          description: role assigned to user
+          content:
+            'application/json':
+              schema:
+                $ref: '#/components/schemas/UserRole'
+        '401':
+          description: Unauthorized
+        default:
+          description: error payload
+          content:
+            'application/json':
+              schema:
+                $ref: '#/components/schemas/Error'
+    parameters:
+      - name: Authorization
+        in: header
+        description: JWT token
+        required: true
+        schema:
+          type: string
+  /user_role_revoke:
+    post:
+      description: Revoke role from user
+      requestBody:
+        description: user role request body
+        required: true
+        content:
+          'application/json':
+            schema:
+              type: object
+              required:
+                - user_id
+                - role_id
+              properties:
+                user_id:
+                  type: string
+                role_id:
+                  type: string
+      responses:
+        '200':
+          description: role revoked from user
+          content:
+            'application/json':
+              schema:
+                $ref: '#/components/schemas/UserRole'
+        '401':
+          description: Unauthorized
+        default:
+          description: error payload
+          content:
+            'application/json':
+              schema:
+                $ref: '#/components/schemas/Error'
+    parameters:
+      - name: Authorization
+        in: header
+        description: JWT token
+        required: true
+        schema:
+          type: string
+
+components:
+  schemas:
+    AuthHistory:
+      type: object
+      required:
+        - uuid
+        - user_agent_id
+        - auth_date
+      properties:
+        uuid:
+          type: string
+        user_agent_id:
+          type: string
+        auth_date:
+          type: string
+          format: date-time
+    Error:
+      type: object
+      required:
+        - error
+      properties:
+        error:
+          type: string
+    Permission:
+      type: object
+      required:
+        - uuid
+        - name
+      properties:
+        uuid:
+          type: string
+        name:
+          type: string
+    Role:
+      type: object
+      required:
+        - uuid
+        - name
+      properties:
+        uuid:
+          type: string
+        name:
+          type: string
+    RolePermission:
+      type: object
+      required:
+        - uuid
+        - role_id
+        - permission_id
+      properties:
+        uuid:
+          type: string
+        role_id:
+          type: string
+        permission_id:
+          type: string
+    User:
+      type: object
+      required:
+        - uuid
+        - username
+        - password
+      properties:
+        uuid:
+          type: string
+        username:
+          type: string
+        password:
+          type: string
+          format: password
+        email:
+          type: string
+    UserRole:
+      type: object
+      required:
+        - uuid
+        - user_id
+        - role_id
+      properties:
+        uuid:
+          type: string
+        user_id:
+          type: string
+        role_id:
+          type: string

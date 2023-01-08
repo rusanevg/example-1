@@ -1,0 +1,52 @@
+version: '3'
+services:
+
+  test-flask:
+    container_name: test-flask
+    build:
+      context: ../../.
+      args:
+        YOUR_ENV: development
+    image: test-flask
+    entrypoint: >
+      sh -c "python main.py"
+    ports:
+      - 5000:5000
+    environment:
+      REDIS_HOST: test-redis
+      DB_HOST: test-postgres
+      DB_NAME: auth_database
+      DB_USER: test_user
+      DB_PASSWORD: test_password
+    depends_on:
+      - test-postgres
+      - test-redis
+    networks:
+      - movies_auth-test
+
+  test-redis:
+    image: redis:6.2-alpine
+    container_name: test-redis
+    command: redis-server --save 20 1 --loglevel warning
+    ports:
+      - 6379:6379
+    networks:
+      - movies_auth-test
+
+  test-postgres:
+    image: postgres:13.3
+    container_name: test-postgres
+    environment:
+      POSTGRES_DB: auth_database
+      POSTGRES_USER: test_user
+      POSTGRES_PASSWORD: test_password
+      PGDATA: "/var/lib/postgresql/data/pgdata"
+    ports:
+      - 5432:5432
+    networks:
+      - movies_auth-test
+
+
+networks:
+  movies_auth-test:
+    driver: bridge
