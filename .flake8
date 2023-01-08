@@ -4,4 +4,4 @@
 ignore = F401, E402, E241
 exclude = .git,
 max-complexity = 10
-max_line_length = 120
+
